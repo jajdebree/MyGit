@@ -17,14 +17,20 @@
 
     var bluePlayer = true;
 
+    var gameOver = false;
+    
+    window.onload = function() {
+        createTable(6, 7);
+    };
+
     function createTable(rows, cols)
     {
         var baseElement = document.getElementById("base");
 
         tableRows = rows;
         tableCols = cols;
-        tableWidth = 50 * tableCols;
-        tableHeight = 50 * tableRows;
+        tableWidth = 100 * tableCols;
+        tableHeight = 100 * tableRows;
         var tableHtml = "<table width=\"" + tableWidth + "\" height=\"" + tableHeight + "\" align=\"center\">";
         for(let i = 0; i < rows; i++)
         {
@@ -51,14 +57,14 @@
 
     function evalVictory()
     {
-        for(let it = 0; it < tableValues.length; it++)
-        {
-            let weight = tableValues[it][1];
-            let activeCol = it % tableCols;
-            let activeRow = Math.floor(it / tableCols);
-
-            document.getElementById(activeRow + "x" + activeCol).innerText = weight;
-        }
+        //for(let it = 0; it < tableValues.length; it++)
+        //{
+        //    let weight = tableValues[it][1];
+        //    let activeCol = it % tableCols;
+        //    let activeRow = Math.floor(it / tableCols);
+        //
+        //    document.getElementById(activeRow + "x" + activeCol).innerText = weight;
+        //}
         for(let idx = 0; idx < tableValues.length; idx++)
         {
             // only check when the weight of a tile exceeds 2, as it could indicate a victory
@@ -219,6 +225,10 @@
 
     function eClickCell(event)
     {
+        if(gameOver)
+        {
+            return;
+        }
         let idPair = this.id.split("x");
         let col = parseInt(idPair[1]);
         let end = tableRows - 1;
@@ -236,6 +246,8 @@
                     tableValues[idx][0] = 1;
                     tableValues[idx][1] = 1;
                     bluePlayer = false;
+                    document.getElementById("status").innerText = "Player Red";
+                    document.getElementById("status").style = "color:red";
                 }
                 else
                 {
@@ -244,6 +256,8 @@
                     tableValues[idx][0] = 2;
                     tableValues[idx][1] = 1;
                     bluePlayer = true;
+                    document.getElementById("status").innerText = "Player Blue";
+                    document.getElementById("status").style = "color:blue";
                 }
                 let row = i;
                 let left = Math.max(0, col - 1);
@@ -271,11 +285,15 @@
                 let victor = evalVictory();
                 if(victor == 1)
                 {
-                    alert("Blue wins!");
+                    document.getElementById("status").innerText = "Victory for Blue!";
+                    document.getElementById("status").style = "color:blue";
+                    gameOver = true;
                 }
                 else if (victor == 2)
                 {
-                    alert("Red wins!");
+                    document.getElementById("status").innerText = "Victory for Red!";
+                    document.getElementById("status").style = "color:red";
+                    gameOver = true;
                 }
                 shadeCol(col);
                 break;
@@ -286,6 +304,6 @@
 </script>
 <body>
     <div id="base"></div>
-    <input type="button" onclick="createTable(6, 7)" value="Init">
+    <div id="status" style="color:blue" align="center">Player Blue</div>
 </body>
 </html>
