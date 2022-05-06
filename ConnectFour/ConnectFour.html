@@ -13,6 +13,10 @@
     var tableWidth = 0;
     var tableHeight = 0;
 
+    var tableValues = [];
+
+    var bluePlayer = true;
+
     function createTable(rows, cols)
     {
         var baseElement = document.getElementById("base");
@@ -27,20 +31,256 @@
             tableHtml += "<tr>";
             for(let j = 0; j < cols; j++)
             {
-                tableHtml += "<td></td>";
+                let cellId = i + "x" + j;
+                tableHtml += "<td id=\"" + cellId + "\"></td>";
+                // first value denotes control; second value denotes weight
+                tableValues.push([0, 0]);
             }
             tableHtml += "</tr>";
         }
         tableHtml += "</table>";
         baseElement.innerHTML = tableHtml;
         
-        var tableCells = document.getElementsByTagName("td");
-        baseElement.addEventListener("mouseenter", highlightCell);
+        let tableCells = document.querySelectorAll("td");
+        tableCells.forEach(tableCell => {
+            tableCell.addEventListener("mouseover", eOverCell);
+            tableCell.addEventListener("mouseout", eOutCell);
+            tableCell.addEventListener("click", eClickCell);
+        })
     }
 
-    function highlightCell(event)
+    function evalVictory()
     {
-        console.log("jackpot");
+        for(let it = 0; it < tableValues.length; it++)
+        {
+            let weight = tableValues[it][1];
+            let activeCol = it % tableCols;
+            let activeRow = Math.floor(it / tableCols);
+
+            document.getElementById(activeRow + "x" + activeCol).innerText = weight;
+        }
+        for(let idx = 0; idx < tableValues.length; idx++)
+        {
+            // only check when the weight of a tile exceeds 2, as it could indicate a victory
+            if(tableValues[idx][1] > 2)
+            {
+                let playerId = tableValues[idx][0];
+
+                let activeCol = idx % tableCols;
+                let activeRow = Math.floor(idx / tableCols);
+                
+                let left = Math.max(0, activeCol - 2);
+                let right = Math.min(tableCols - 1, activeCol + 2);
+                let top = Math.max(0, activeRow - 2); 
+                let bottom = Math.min(tableRows - 1, activeRow + 2);
+
+                // at 4 this means a victory
+                let count = 0;
+                // check for horizontal victory
+                for (let x = left; x <= right; x++)
+                {
+                    let idxN = x + activeRow * tableCols;
+                    if(tableValues[idxN][0] == playerId)
+                    {
+                        count++;
+                    }
+                }
+                if (count > 3)
+                {
+                    return playerId;
+                }
+
+                count = 0;
+                // check for vertical victory
+                for (let y = top; y <= bottom; y++)
+                {
+                    let idxN = activeCol + y * tableCols;
+                    if(tableValues[idxN][0] == playerId)
+                    {
+                        count++;
+                    }
+                }
+                if (count > 3)
+                {
+                    return playerId;
+                }
+
+                // check for diagonal victories
+                // positive + positive
+                count = 0;
+                for(let k = -2; k <= 2; k++)
+                {
+                    let y = activeRow + k;
+                    if(y < top || y > bottom)
+                    {
+                        continue;
+                    }
+                    let x = activeCol + k;
+                    if(x < left || x > right)
+                    {
+                        continue;
+                    }
+                    let idxN = x + y * tableCols;
+                    if(tableValues[idxN][0] == playerId)
+                    {
+                        count++;
+                    }
+                }
+                if (count > 3)
+                {
+                    return playerId;
+                }
+
+                count = 0;
+                // positive + negative
+                for(let k = -2; k <= 2; k++)
+                {
+                    let y = activeRow + k;
+                    if(y < top || y > bottom)
+                    {
+                        continue;
+                    }
+                    let x = activeCol - k;
+                    if(x < left || x > right)
+                    {
+                        continue;
+                    }
+                    let idxN = x + y * tableCols;
+                    if(tableValues[idxN][0] == playerId)
+                    {
+                        count++;
+                    }
+                }
+                if (count > 3)
+                {
+                    return playerId;
+                }
+            }
+        }
+    }
+
+    function shadeCol(col)
+    {
+        let predicted = false;
+        let end = tableRows - 1;
+        for (let i = end; i >= 0; i--)
+        {
+            let idx = col + i * tableCols;
+            if(tableValues[idx][0] == 0)
+            {
+                if(predicted)
+                {
+                    document.getElementById(i + "x" + col).style.backgroundColor = "lightgray";
+                }
+                else
+                {
+                    if(bluePlayer)
+                    {
+                        document.getElementById(i + "x" + col).style.backgroundColor = "aqua";
+                        predicted = true;
+                    }
+                    else
+                    {
+                        document.getElementById(i + "x" + col).style.backgroundColor = "orange";
+                        predicted = true;
+                    }
+                }
+            }
+        }
+    }
+
+    function unshadeCol(col)
+    {
+        for (let i = 0; i < tableRows; i++)
+        {
+            let idx = col + i * tableCols;
+            if(tableValues[idx][0] == 0)
+            {
+                document.getElementById(i + "x" + col).style.backgroundColor = "transparent";
+            }
+        }
+    }
+
+    function eOverCell(event)
+    {
+        let idPair = this.id.split("x");
+        let col = parseInt(idPair[1]);
+        shadeCol(col);
+        console.log("Player Blue enters Col " + col);
+    }
+
+    function eOutCell(event)
+    {
+        let idPair = this.id.split("x");
+        let col = parseInt(idPair[1]);
+        unshadeCol(col);
+        console.log("Player Blue leaves Col " + col);
+    }
+
+    function eClickCell(event)
+    {
+        let idPair = this.id.split("x");
+        let col = parseInt(idPair[1]);
+        let end = tableRows - 1;
+        for (let i = end; i >= 0; i--)
+        {
+            let idx = col + i * tableCols;
+            if(tableValues[idx][0] == 0)
+            {
+                var target = document.getElementById(i + "x" + col);
+                let playerId = 0;
+                if(bluePlayer)
+                {
+                    playerId = 1;
+                    target.style.backgroundColor = "blue";
+                    tableValues[idx][0] = 1;
+                    tableValues[idx][1] = 1;
+                    bluePlayer = false;
+                }
+                else
+                {
+                    playerId = 2;
+                    target.style.backgroundColor = "red";
+                    tableValues[idx][0] = 2;
+                    tableValues[idx][1] = 1;
+                    bluePlayer = true;
+                }
+                let row = i;
+                let left = Math.max(0, col - 1);
+                let right = Math.min(tableCols - 1, col + 1);
+                let top = Math.max(0, row - 1); 
+                let bottom = Math.min(tableRows - 1, row + 1);
+                console.log(col + ", " + row);
+                for(let x = left; x <= right; x++)
+                {
+                    for(let y = top; y <= bottom; y++)
+                    {
+                        console.log(x + "," + y);
+                        let idxN = x + y * tableCols;
+                        if(idx == idxN)
+                        {
+                            continue;
+                        }
+                        if(tableValues[idxN][0] == playerId)
+                        {
+                            tableValues[idxN][1]++;
+                            tableValues[idx][1]++;
+                        }
+                    }
+                }
+                let victor = evalVictory();
+                if(victor == 1)
+                {
+                    alert("Blue wins!");
+                }
+                else if (victor == 2)
+                {
+                    alert("Red wins!");
+                }
+                shadeCol(col);
+                break;
+            }
+        }
     }
 
 </script>
