@@ -4,9 +4,48 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="ConnectFour.css">
     <title>Document</title>
 </head>
+<script>
+    var tableRows = 0;
+    var tableCols = 0;
+    var tableWidth = 0;
+    var tableHeight = 0;
+
+    function createTable(rows, cols)
+    {
+        var baseElement = document.getElementById("base");
+
+        tableRows = rows;
+        tableCols = cols;
+        tableWidth = 50 * tableCols;
+        tableHeight = 50 * tableRows;
+        var tableHtml = "<table width=\"" + tableWidth + "\" height=\"" + tableHeight + "\" align=\"center\">";
+        for(let i = 0; i < rows; i++)
+        {
+            tableHtml += "<tr>";
+            for(let j = 0; j < cols; j++)
+            {
+                tableHtml += "<td></td>";
+            }
+            tableHtml += "</tr>";
+        }
+        tableHtml += "</table>";
+        baseElement.innerHTML = tableHtml;
+        
+        var tableCells = document.getElementsByTagName("td");
+        baseElement.addEventListener("mouseenter", highlightCell);
+    }
+
+    function highlightCell(event)
+    {
+        console.log("jackpot");
+    }
+
+</script>
 <body>
-    
+    <div id="base"></div>
+    <input type="button" onclick="createTable(6, 7)" value="Init">
 </body>
 </html>
